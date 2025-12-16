@@ -1,0 +1,62 @@
+@startuml
+title Schéma BD — Gestion des Congés (CHU Ibn Sina)
+
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+
+class employees {
+  + id: TEXT <<PK>>
+  + name: TEXT
+  + annual_entitlement: INTEGER
+}
+
+class leave_requests {
+  + id: TEXT <<UNIQUE>>
+  + display_id: INTEGER
+  + employee_id: TEXT <<FK employees.id>>
+  + start_date: TEXT
+  + end_date: TEXT
+  + type: TEXT
+  + year: INTEGER
+  + days: INTEGER
+  + status: TEXT
+  + rejection_reason: TEXT
+}
+
+class sequences {
+  + name: TEXT <<PK>>
+  + value: INTEGER
+}
+
+employees "1" <-- "n" leave_requests : employee_id
+
+note right of leave_requests
+status ∈ {PENDING, APPROVED, REJECTED}
+type ∈ {ANNUAL, SICK, UNPAID, MATERNITY, PATERNITY}
+end note
+
+note bottom of employees
+annual_entitlement = nombre de jours annuels autorisés
+end note
+
+newpage
+title Règles de calcul — Jours ouvrés et Solde
+
+class Calculs {
+  + businessDaysBetween(start, end): INTEGER
+  + annualRemaining(employeeId, year): INTEGER
+}
+
+Calculs .. leave_requests : utilise days, type, status
+Calculs .. employees : utilise annual_entitlement
+
+note right of Calculs
+Jours ouvrés: tous les jours entre start et end,
+hors samedi et dimanche (inclusif).
+
+Solde annuel = annual_entitlement
+ - somme(days des demandes ANNUAL APPROVED sur l'année).
+end note
+@enduml
+

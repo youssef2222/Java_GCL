@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Cahier de charge — Gestion des Congés (CHU Ibn Sina)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; margin: 24px; color: #111; }
+    h1, h2, h3 { margin: 0.6em 0 0.3em; }
+    ul { margin: 0.4em 0 0.8em 1.2em; }
+    code, pre { font-family: Consolas, Menlo, monospace; }
+    .print { position: fixed; top: 12px; right: 12px; padding: 8px 12px; background: #0366d6; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .print:hover { background: #024ea3; }
+    hr { border: 0; border-top: 1px solid #ddd; margin: 24px 0; }
+  </style>
+</head>
+<body>
+  <button class="print" onclick="window.print()">Imprimer en PDF</button>
+  <h1>Cahier de charge — Gestion des Congés (CHU Ibn Sina)</h1>
+  <h2>Contexte et objectifs</h2>
+  <ul>
+    <li>Contexte: Application desktop de gestion des congés pour le CHU Ibn Sina.</li>
+    <li>Objectifs:
+      <ul>
+        <li>Gérer les employés et leurs droits annuels.</li>
+        <li>Enregistrer les demandes de congé avec calcul des jours ouvrés.</li>
+        <li>Valider/rejeter les demandes, suivre le solde annuel.</li>
+        <li>Visualiser les demandes en attente et approuvées.</li>
+        <li>Branding avec logo et lancement via icône bureau.</li>
+      </ul>
+    </li>
+  </ul>
+  <h2>Périmètre fonctionnel</h2>
+  <ul>
+    <li>Gestion des employés: créer/afficher des employés avec id, nom, droit annuel; écran Employés: ajout + liste.</li>
+    <li>Demandes de congé: saisie ID employé, date début, date fin, type; calcul des jours ouvrés; numéro lisible auto-incrémenté.</li>
+    <li>Validation: liste En Attente (Approuver/Rejeter avec motif), liste Approuvés avec N°, dates, type, jours.</li>
+    <li>Solde: affichage du solde annuel restant par employé et année; diminution par congés ANNUAL approuvés.</li>
+    <li>Branding et lancement: logo dans l’en-tête et icône de fenêtre; icône bureau Windows (lancement silencieux).</li>
+  </ul>
+  <h2>Règles métier</h2>
+  <ul>
+    <li>Jours ouvrés: compter tous les jours de start à end inclus; exclure samedi et dimanche.</li>
+    <li>Types: ANNUAL, SICK, UNPAID, MATERNITY, PATERNITY.</li>
+    <li>Statuts: PENDING, APPROVED, REJECTED.</li>
+    <li>Solde annuel: droit_annuel − somme(jours des demandes ANNUAL APPROVED sur l’année), borné à 0.</li>
+    <li>Identifiants: id technique (UUID), display_id (entier auto-incrémenté affiché).</li>
+  </ul>
+  <h2>Modèle de données (SQLite)</h2>
+  <ul>
+    <li>employees: id (PK), name, annual_entitlement.</li>
+    <li>leave_requests: id (UNIQUE), display_id, employee_id (FK→employees.id), start_date, end_date, type, year, days, status, rejection_reason.</li>
+    <li>sequences: name (PK), value.</li>
+  </ul>
+  <h2>Architecture technique</h2>
+  <ul>
+    <li>Java SE + Swing (desktop), SQLite via JDBC, pattern Service/Repository.</li>
+    <li>Entrée: Main (initialisation DB, modes gui/demo).</li>
+    <li>Service: demande, validation, solde, listes En Attente/Approuvés.</li>
+    <li>DB: schéma et séquences.</li>
+    <li>UI: onglets Employés, Demande, Validation, Solde; logo loader.</li>
+  </ul>
+  <h2>Interfaces utilisateur</h2>
+  <ul>
+    <li>Employés: formulaire d’ajout; tableau non modifiable; rafraîchir.</li>
+    <li>Demande Congé: saisie; message de succès avec N°, Jours, Type.</li>
+    <li>Validation: En Attente (actions Approuver/Rejeter), Approuvés (N°, dates, type, jours).</li>
+    <li>Solde Annuel: saisie ID employé + année; affichage du solde.</li>
+  </ul>
+  <h2>Exigences non fonctionnelles</h2>
+  <ul>
+    <li>Performance: réactivité locale, requêtes SQLite rapides.</li>
+    <li>Fiabilité: persistance des statuts; IDs lisibles persistés.</li>
+    <li>Sécurité: pas de secrets en clair.</li>
+    <li>Ergonomie: tableaux non éditables; formulaires clairs; IDs lisibles.</li>
+    <li>Maintenance: architecture modulaire; interfaces repository.</li>
+  </ul>
+  <h2>Déploiement et lancement</h2>
+  <ul>
+    <li>Prérequis: Java; SQLite JDBC `lib/sqlite-jdbc-3.51.1.0.jar`.</li>
+    <li>Compilation/Exécution:
+      <ul>
+        <li><code>javac -cp lib/sqlite-jdbc-3.51.1.0.jar -d out (Get-ChildItem src/main/java -Recurse -Filter *.java).FullName</code></li>
+        <li><code>java -cp "out;lib/sqlite-jdbc-3.51.1.0.jar" com.gcl.conge.Main gui</code></li>
+      </ul>
+    </li>
+    <li>Icône bureau: <code>run_gui.bat</code> + <code>run_gui.vbs</code>, raccourci Windows, lancement silencieux.</li>
+  </ul>
+  <h2>Tests et acceptation</h2>
+  <ul>
+    <li>Ajout employé et affichage.</li>
+    <li>Demande ANNUAL sur une semaine: jours=5 (lun–ven).</li>
+    <li>Validation et solde annuel.</li>
+    <li>Listes En Attente/Approuvés cohérentes.</li>
+    <li>Critères: calcul correct, solde juste, ID lisible, lancement silencieux.</li>
+  </ul>
+  <h2>Évolutions futures</h2>
+  <ul>
+    <li>Jours fériés, demi-journées, règles spécifiques.</li>
+    <li>Filtres par employé/année.</li>
+    <li>Export PDF/CSV.</li>
+    <li>Authentification et rôles.</li>
+    <li>Packaging MSI/EXE avec JRE embarqué.</li>
+  </ul>
+  <hr>
+  <p>Schéma BD: voir <a href="db_uml.svg">db_uml.svg</a> et <a href="db_uml_001.svg">db_uml_001.svg</a>. Imprimer en PDF via le bouton en haut ou Ctrl+P.</p>
+</body>
+</html>
